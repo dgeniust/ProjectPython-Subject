@@ -22,7 +22,7 @@ BGIMG = pygame.image.load('./G213NTD_GAME/img/background.png') # hình nền
 
 # LAYER (SURFACE) NỀN
 DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH_G213NTD, WINDOWHEIGHT_G213NTD))
-pygame.display.set_caption('G213NTD_CARRACING: Game = Game ĐUA XE')
+pygame.display.set_caption('Ma Hoa = G213NTD_CARRACING: Game = Game ĐUA XE')
 
 # LỚP HÌNH NỀN = CUỘN NỀN
 class Background():
