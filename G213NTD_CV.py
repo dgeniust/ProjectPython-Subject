@@ -50,7 +50,7 @@ class VideoFrameExtractorApp_G213NTD:
     def __init__(self, root):
         self.root = root
         self.root.title("Video Frame Extractor-G213NTD")
-        self.root.geometry("500x600")
+        self.root.geometry("1920x1080")
 
         # Video path và image path
         self.video_path = None
@@ -107,6 +107,25 @@ class VideoFrameExtractorApp_G213NTD:
         # Label để hiển thị ảnh
         self.image_label = tk.Label(self.root)
         self.image_label.pack(pady=20)
+        # Tạo khung để hiển thị ảnh
+        self.image_frame = tk.Frame(self.root)
+        self.image_frame.pack(pady=20)
+
+        # Các label để hiển thị ảnh
+        self.original_image_label = tk.Label(self.image_frame)
+        self.original_image_label.grid(row=0, column=0, padx=10, pady=10)
+
+        self.blur_image_label = tk.Label(self.image_frame)
+        self.blur_image_label.grid(row=0, column=1, padx=10, pady=10)
+
+        self.bw_image_label = tk.Label(self.image_frame)
+        self.bw_image_label.grid(row=0, column=2, padx=10, pady=10)
+
+        self.sharpen_image_label = tk.Label(self.image_frame)
+        self.sharpen_image_label.grid(row=1, column=0, padx=10, pady=10)
+
+        self.resized_image_label = tk.Label(self.image_frame)
+        self.resized_image_label.grid(row=1, column=1, padx=10, pady=10)
 
     def load_image_G213NTD(self):
         self.current_image = load_image_G213NTD()
@@ -220,9 +239,29 @@ class VideoFrameExtractorApp_G213NTD:
         if self.current_image:
             # Chuyển đổi ảnh từ PIL Image sang định dạng mà tkinter có thể hiển thị
             img_tk = ImageTk.PhotoImage(self.current_image)
-            self.image_label.config(image=img_tk)
-            self.image_label.image = img_tk  # Lưu tham chiếu đến ảnh để tránh bị garbage collection
+            self.original_image_label.config(image=img_tk)
+            self.original_image_label.image = img_tk
 
+            # Cập nhật các ảnh đã chỉnh sửa
+            blurred_img = blur_image_G213NTD(self.current_image)
+            blur_img_tk = ImageTk.PhotoImage(blurred_img)
+            self.blur_image_label.config(image=blur_img_tk)
+            self.blur_image_label.image = blur_img_tk
+
+            bw_img = convert_to_bw_G213NTD(self.current_image)
+            bw_img_tk = ImageTk.PhotoImage(bw_img)
+            self.bw_image_label.config(image=bw_img_tk)
+            self.bw_image_label.image = bw_img_tk
+
+            sharpened_img = sharpen_image_G213NTD(self.current_image)
+            sharpen_img_tk = ImageTk.PhotoImage(sharpened_img)
+            self.sharpen_image_label.config(image=sharpen_img_tk)
+            self.sharpen_image_label.image = sharpen_img_tk
+
+            resized_img = resize_image_G213NTD(self.current_image, 300, 300)
+            resized_img_tk = ImageTk.PhotoImage(resized_img)
+            self.resized_image_label.config(image=resized_img_tk)
+            self.resized_image_label.image = resized_img_tk
 if __name__ == "__main__":
     root = tk.Tk()
     app = VideoFrameExtractorApp_G213NTD(root)

@@ -1,96 +1,264 @@
-import pygame
-import random
+import tkinter as tk
+from tkinter import filedialog, messagebox
+from PIL import Image, ImageTk, ImageFilter
+import os
+import cv2
 
-# Khởi tạo Pygame
-pygame.init()
 
-# Thiết lập kích thước màn hình và màu sắc
-screen_width = 800
-screen_height = 600
-screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption("Game Đua Xe")
+# Hàm làm mờ ảnh
+def blur_image_G213NTD(image):
+    return image.filter(ImageFilter.GaussianBlur(radius=5))
 
-# Màu sắc
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-RED = (255, 0, 0)
+# Hàm làm sắc nét ảnh
+def sharpen_image_G213NTD(image):
+    return image.filter(ImageFilter.UnsharpMask(radius=2, percent=150, threshold=3))
 
-# Tốc độ di chuyển và tốc độ chướng ngại vật
-car_speed = 5
-obstacle_speed = 5
+# Hàm chuyển ảnh sang đen trắng
+def convert_to_bw_G213NTD(image):
+    return image.convert("L")
 
-# Tải hình ảnh xe và chướng ngại vật
-car_image = pygame.image.load('./G213NTD_GAME/img/car.png')  # Thay đổi đường dẫn hình ảnh xe
-car_rect = car_image.get_rect()
-car_rect.centerx = screen_width // 2
-car_rect.bottom = screen_height - 10
+# Hàm cắt ảnh
+def crop_image_G213NTD(image, left, top, right, bottom):
+    return image.crop((left, top, right, bottom))
 
-# Khởi tạo font chữ
-font = pygame.font.SysFont('Arial', 30)
+# Hàm resize ảnh
+def resize_image_G213NTD(image, width, height):
+    return image.resize((width, height))
 
-# Hàm hiển thị điểm số
-def show_score(score):
-    score_text = font.render("Điểm: " + str(score), True, WHITE)
-    screen.blit(score_text, (10, 10))
+# Hàm tải ảnh từ máy tính
+def load_image_G213NTD():
+    file_path = filedialog.askopenfilename(filetypes=[("Image Files", "*.jpg;*.jpeg;*.png;*.bmp")])
+    if file_path:
+        try:
+            image = Image.open(file_path)
+            return image
+        except Exception as e:
+            messagebox.showerror("Error", f"Không thể mở ảnh: {str(e)}")
+            return None
+    return None
 
-# Hàm tạo chướng ngại vật
-def create_obstacle():
-    width = random.randint(50, 150)
-    height = random.randint(20, 40)
-    x = random.randint(0, screen_width - width)
-    y = -height
-    return pygame.Rect(x, y, width, height)
+# Hàm lưu ảnh sau khi xử lý
+def save_image_G213NTD(image):
+    file_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=[("PNG Files", "*.png"), ("JPEG Files", "*.jpg")])
+    if file_path:
+        try:
+            image.save(file_path)
+            messagebox.showinfo("Success", "Ảnh đã được lưu thành công!")
+        except Exception as e:
+            messagebox.showerror("Error", f"Không thể lưu ảnh: {str(e)}")
 
-# Hàm chính của game
-def game_loop():
-    run_game = True
-    clock = pygame.time.Clock()
-    score = 0
-    obstacles = []
+class ImageEditorApp_G213NTD:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Video Frame Extractor-G213NTD")
+        self.root.geometry("1920x1080")
 
-    while run_game:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                run_game = False
+        # Video path và image path
+        self.video_path = None
+        self.current_image = None
 
-        # Điều khiển xe
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_LEFT] and car_rect.left > 0:
-            car_rect.x -= car_speed
-        if keys[pygame.K_RIGHT] and car_rect.right < screen_width:
-            car_rect.x += car_speed
+        # Tạo các widget cho GUI
+        self.create_widgets()
 
-        # Tạo và di chuyển chướng ngại vật
-        if random.randint(1, 20) == 1:
-            obstacles.append(create_obstacle())
+    def create_widgets(self):
+        # Nút chọn video
+        self.select_button = tk.Button(self.root, text="Select Video", command=self.select_video)
+        self.select_button.pack(pady=20)
 
-        for obstacle in obstacles:
-            obstacle.y += obstacle_speed
-            if obstacle.colliderect(car_rect):
-                run_game = False  # Xe va chạm với chướng ngại vật, kết thúc game
+        # Label hiển thị video path
+        self.video_label = tk.Label(self.root, text="No video selected", wraplength=400)
+        self.video_label.pack(pady=10)
 
-            if obstacle.top > screen_height:
-                obstacles.remove(obstacle)
-                score += 1  # Người chơi vượt qua chướng ngại vật
-
-        # Vẽ lại màn hình
-        screen.fill(BLACK)
-        screen.blit(car_image, car_rect)
+        # Nút trích xuất frame
+        self.extract_button = tk.Button(self.root, text="Extract Frames", state=tk.DISABLED, command=self.extract_frames)
+        self.extract_button.pack(pady=20)
         
-        # Vẽ chướng ngại vật
-        for obstacle in obstacles:
-            pygame.draw.rect(screen, RED, obstacle)
+        # Nút tải ảnh
+        self.load_button = tk.Button(self.root, text="Tải ảnh", command=self.load_image_G213NTD)
+        self.load_button.pack(pady=10)
 
-        # Hiển thị điểm số
-        show_score(score)
+        # Nút lưu ảnh
+        self.save_button = tk.Button(self.root, text="Lưu ảnh", state=tk.DISABLED, command=self.save_image_G213NTD)
+        self.save_button.pack(pady=10)
 
-        # Cập nhật màn hình
-        pygame.display.update()
+        # Nút làm mờ ảnh
+        self.blur_button = tk.Button(self.root, text="Làm mờ ảnh", state=tk.DISABLED, command=self.blur_image_G213NTD)
+        self.blur_button.pack(pady=5)
 
-        # Cập nhật FPS
-        clock.tick(60)
+        # Nút làm sắc nét ảnh
+        self.sharpen_button = tk.Button(self.root, text="Làm sắc nét ảnh", state=tk.DISABLED, command=self.sharpen_image_G213NTD)
+        self.sharpen_button.pack(pady=5)
 
-    pygame.quit()
+        # Nút chuyển sang đen trắng
+        self.bw_button = tk.Button(self.root, text="Chuyển sang đen trắng", state=tk.DISABLED, command=self.convert_to_bw_G213NTD)
+        self.bw_button.pack(pady=5)
 
-# Chạy game
-game_loop()
+        # Nút cắt ảnh
+        self.crop_button = tk.Button(self.root, text="Cắt ảnh", state=tk.DISABLED, command=self.crop_image_G213NTD)
+        self.crop_button.pack(pady=5)
+
+        # Nút resize ảnh
+        self.resize_button = tk.Button(self.root, text="Resize ảnh", state=tk.DISABLED, command=self.resize_image_G213NTD)
+        self.resize_button.pack(pady=5)
+
+        # Khung để hiển thị ảnh
+        self.image_frame = tk.Frame(self.root)
+        self.image_frame.pack(pady=20)
+
+        # Các label để hiển thị ảnh
+        self.original_image_label = tk.Label(self.image_frame)
+        self.original_image_label.grid(row=0, column=0, padx=10, pady=10)
+
+        self.blur_image_label = tk.Label(self.image_frame)
+        self.blur_image_label.grid(row=0, column=1, padx=10, pady=10)
+
+        self.bw_image_label = tk.Label(self.image_frame)
+        self.bw_image_label.grid(row=0, column=2, padx=10, pady=10)
+
+        self.sharpen_image_label = tk.Label(self.image_frame)
+        self.sharpen_image_label.grid(row=1, column=0, padx=10, pady=10)
+
+        self.resized_image_label = tk.Label(self.image_frame)
+        self.resized_image_label.grid(row=1, column=1, padx=10, pady=10)
+
+    def select_video(self):
+        # Mở cửa sổ chọn file video
+        self.video_path = filedialog.askopenfilename(title="Select Video", filetypes=[("MP4 files", "*.mp4"), ("All files", "*.*")])
+
+        # Hiển thị đường dẫn video
+        if self.video_path:
+            self.video_label.config(text=f"Selected Video: {self.video_path}")
+            self.extract_button.config(state=tk.NORMAL)  # Kích hoạt nút trích xuất frame
+        else:
+            self.video_label.config(text="No video selected")
+
+    def extract_frames(self):
+        # Kiểm tra nếu không chọn video
+        if not self.video_path:
+            messagebox.showerror("Error", "Please select a video first!")
+            return
+
+        # Tạo thư mục lưu các frame
+        output_folder = "frames"
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
+        # Mở video
+        cap = cv2.VideoCapture(self.video_path)
+
+        if not cap.isOpened():
+            messagebox.showerror("Error", "Failed to open video.")
+            return
+
+        # Trích xuất frame
+        frame_count = 0
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            # Lưu từng frame dưới dạng ảnh
+            frame_filename = os.path.join(output_folder, f"frame_{frame_count:04d}.jpg")
+            cv2.imwrite(frame_filename, frame)
+            frame_count += 1
+
+        cap.release()
+
+        # Hiển thị thông báo hoàn tất
+        self.status_label.config(text=f"Extracted {frame_count} frames successfully.")
+        messagebox.showinfo("Success", f"{frame_count} frames extracted and saved to '{output_folder}'.")
+
+    def load_image_G213NTD(self):
+        self.current_image = load_image_G213NTD()
+        if self.current_image:
+            self.update_image_display()
+            # Kích hoạt các nút chỉnh sửa ảnh
+            self.save_button.config(state=tk.NORMAL)
+            self.blur_button.config(state=tk.NORMAL)
+            self.sharpen_button.config(state=tk.NORMAL)
+            self.bw_button.config(state=tk.NORMAL)
+            self.crop_button.config(state=tk.NORMAL)
+            self.resize_button.config(state=tk.NORMAL)
+
+    def save_image_G213NTD(self):
+        if self.current_image:
+            save_image_G213NTD(self.current_image)
+        else:
+            messagebox.showwarning("Warning", "Chưa có ảnh để lưu!")
+
+    def blur_image_G213NTD(self):
+        if self.current_image:
+            self.current_image = blur_image_G213NTD(self.current_image)
+            self.update_image_display()
+        else:
+            messagebox.showwarning("Warning", "Chưa có ảnh để làm mờ!")
+
+    def sharpen_image_G213NTD(self):
+        if self.current_image:
+            self.current_image = sharpen_image_G213NTD(self.current_image)
+            self.update_image_display()
+        else:
+            messagebox.showwarning("Warning", "Chưa có ảnh để làm sắc nét!")
+
+    def convert_to_bw_G213NTD(self):
+        if self.current_image:
+            self.current_image = convert_to_bw_G213NTD(self.current_image)
+            self.update_image_display()
+        else:
+            messagebox.showwarning("Warning", "Chưa có ảnh để chuyển sang đen trắng!")
+
+    def crop_image_G213NTD(self):
+        if self.current_image:
+            # Cắt ảnh (mặc định: cắt từ 50, 50 tới 250, 250)
+            left = 50
+            top = 50
+            right = self.current_image.width - 50
+            bottom = self.current_image.height - 50
+            self.current_image = crop_image_G213NTD(self.current_image, left, top, right, bottom)
+            self.update_image_display()
+        else:
+            messagebox.showwarning("Warning", "Chưa có ảnh để cắt!")
+
+    def resize_image_G213NTD(self):
+        if self.current_image:
+            # Resize ảnh (mặc định: 300x300)
+            width = 300
+            height = 300
+            self.current_image = resize_image_G213NTD(self.current_image, width, height)
+            self.update_image_display()
+        else:
+            messagebox.showwarning("Warning", "Chưa có ảnh để resize!")
+
+    def update_image_display(self):
+        if self.current_image:
+            # Chuyển đổi ảnh từ PIL Image sang định dạng mà tkinter có thể hiển thị
+            img_tk = ImageTk.PhotoImage(self.current_image)
+            self.original_image_label.config(image=img_tk)
+            self.original_image_label.image = img_tk
+
+            # Cập nhật các ảnh đã chỉnh sửa
+            blurred_img = blur_image_G213NTD(self.current_image)
+            blur_img_tk = ImageTk.PhotoImage(blurred_img)
+            self.blur_image_label.config(image=blur_img_tk)
+            self.blur_image_label.image = blur_img_tk
+
+            bw_img = convert_to_bw_G213NTD(self.current_image)
+            bw_img_tk = ImageTk.PhotoImage(bw_img)
+            self.bw_image_label.config(image=bw_img_tk)
+            self.bw_image_label.image = bw_img_tk
+
+            sharpened_img = sharpen_image_G213NTD(self.current_image)
+            sharpen_img_tk = ImageTk.PhotoImage(sharpened_img)
+            self.sharpen_image_label.config(image=sharpen_img_tk)
+            self.sharpen_image_label.image = sharpen_img_tk
+
+            resized_img = resize_image_G213NTD(self.current_image, 300, 300)
+            resized_img_tk = ImageTk.PhotoImage(resized_img)
+            self.resized_image_label.config(image=resized_img_tk)
+            self.resized_image_label.image = resized_img_tk
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = ImageEditorApp_G213NTD(root)
+    root.mainloop()
+

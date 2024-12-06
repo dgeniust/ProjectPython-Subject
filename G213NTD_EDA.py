@@ -121,12 +121,12 @@ print(X.columns[selector.get_support(indices=True)]) # in ds các tt đặc trư
 # #Bước 9: Xác định mô hình trích lọc các thuộc tính đặc trưng 
 # # XĐ data frame = Chiếu lấy các thuộc tính đặc trưng đã xđ trong B8
 print("--------------BƯỚC 9----------------")
-df = df[['HP', 'Attack', 'Sp. Atk', 'Sp. Def', 'Speed']] # máu, tấn công, tấn công đặc biệt, phòng thủ đặc biệt, tốc độ
+df = df[['Base Exp.', 'HP', 'Attack', 'Sp. Atk', 'Sp. Def']] # máu, tấn công, tấn công đặc biệt, phòng thủ đặc biệt, tốc độ
 
 # #Bước 10: EDA theo nhu cầu thực tế => input vào các mô hình AI, ML,...
 # # Đơn giản nhất là lấy 1 thuộc tính đầu vào (total) để XD Mô hình
 print("--------------BƯỚC 10----------------")
-X = df[['HP']]
+X = df[['Base Exp.']]
 y = df[['Attack']]
 
 print('CỘT INPUT CẦN XEM XET TÍNH PHỤ THUỘC CỦA CỘT OUTPUT')

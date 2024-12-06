@@ -97,7 +97,7 @@ class Car():
 """
 #####################################
 LANEWIDTH_G213 = 60
-DISTANCE_G213 = 200
+DISTANCE_G213 = 180
 OBSTACLESSPEED_G213 = 2
 CHANGESPEED_G213 = 0.001
 OBSTACLESIMG_G213 = pygame.image.load('./G213NTD_GAME/img/ecar.png')
