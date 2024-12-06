@@ -1,30 +1,31 @@
+import cv2
+import os
 import tkinter as tk
 from tkinter import filedialog, messagebox
-from PIL import Image, ImageFilter, ImageTk
-import os
+from PIL import Image, ImageTk, ImageFilter
 
 # Hàm làm mờ ảnh
-def blur_image(image):
+def blur_image_G213NTD(image):
     return image.filter(ImageFilter.GaussianBlur(radius=5))
 
 # Hàm làm sắc nét ảnh
-def sharpen_image(image):
+def sharpen_image_G213NTD(image):
     return image.filter(ImageFilter.UnsharpMask(radius=2, percent=150, threshold=3))
 
 # Hàm chuyển ảnh sang đen trắng
-def convert_to_bw(image):
+def convert_to_bw_G213NTD(image):
     return image.convert("L")
 
 # Hàm cắt ảnh
-def crop_image(image, left, top, right, bottom):
+def crop_image_G213NTD(image, left, top, right, bottom):
     return image.crop((left, top, right, bottom))
 
 # Hàm resize ảnh
-def resize_image(image, width, height):
+def resize_image_G213NTD(image, width, height):
     return image.resize((width, height))
 
 # Hàm tải ảnh từ máy tính
-def load_image():
+def load_image_G213NTD():
     file_path = filedialog.askopenfilename(filetypes=[("Image Files", "*.jpg;*.jpeg;*.png;*.bmp")])
     if file_path:
         try:
@@ -36,7 +37,7 @@ def load_image():
     return None
 
 # Hàm lưu ảnh sau khi xử lý
-def save_image(image):
+def save_image_G213NTD(image):
     file_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=[("PNG Files", "*.png"), ("JPEG Files", "*.jpg")])
     if file_path:
         try:
@@ -45,114 +46,184 @@ def save_image(image):
         except Exception as e:
             messagebox.showerror("Error", f"Không thể lưu ảnh: {str(e)}")
 
-# Giao diện người dùng GUI
-class ImageEditorApp:
+class VideoFrameExtractorApp_G213NTD:
     def __init__(self, root):
         self.root = root
-        self.root.title("G213NTD_CV")
-        self.image = None
-        self.original_image = None
-        # Set up the GUI components
+        self.root.title("Video Frame Extractor-G213NTD")
+        self.root.geometry("500x600")
+
+        # Video path và image path
+        self.video_path = None
+        self.current_image = None
+
+        # Tạo các widget cho GUI
         self.create_widgets()
+
     def create_widgets(self):
-        # Load image button
+        # Nút chọn video
+        self.select_button = tk.Button(self.root, text="Select Video", command=self.select_video)
+        self.select_button.pack(pady=20)
+
+        # Label hiển thị video path
+        self.video_label = tk.Label(self.root, text="No video selected", wraplength=400)
+        self.video_label.pack(pady=10)
+
+        # Nút trích xuất frame
+        self.extract_button = tk.Button(self.root, text="Extract Frames", state=tk.DISABLED, command=self.extract_frames)
+        self.extract_button.pack(pady=20)
+
         # Nút tải ảnh
-        self.load_button = tk.Button(root, text="Tải ảnh", command=self.load_image)
+        self.load_button = tk.Button(self.root, text="Tải ảnh", command=self.load_image_G213NTD)
         self.load_button.pack(pady=10)
-        
+
         # Nút lưu ảnh
-        self.save_button = tk.Button(root, text="Lưu ảnh", command=self.save_image)
+        self.save_button = tk.Button(self.root, text="Lưu ảnh", state=tk.DISABLED, command=self.save_image_G213NTD)
         self.save_button.pack(pady=10)
-        
+
         # Nút làm mờ ảnh
-        self.blur_button = tk.Button(root, text="Làm mờ ảnh", command=self.blur_image)
+        self.blur_button = tk.Button(self.root, text="Làm mờ ảnh", state=tk.DISABLED, command=self.blur_image_G213NTD)
         self.blur_button.pack(pady=5)
-        
+
         # Nút làm sắc nét ảnh
-        self.sharpen_button = tk.Button(root, text="Làm sắc nét ảnh", command=self.sharpen_image)
+        self.sharpen_button = tk.Button(self.root, text="Làm sắc nét ảnh", state=tk.DISABLED, command=self.sharpen_image_G213NTD)
         self.sharpen_button.pack(pady=5)
-        
+
         # Nút chuyển sang đen trắng
-        self.bw_button = tk.Button(root, text="Chuyển sang đen trắng", command=self.convert_to_bw)
+        self.bw_button = tk.Button(self.root, text="Chuyển sang đen trắng", state=tk.DISABLED, command=self.convert_to_bw_G213NTD)
         self.bw_button.pack(pady=5)
-        
+
         # Nút cắt ảnh
-        self.crop_button = tk.Button(root, text="Cắt ảnh", command=self.crop_image)
+        self.crop_button = tk.Button(self.root, text="Cắt ảnh", state=tk.DISABLED, command=self.crop_image_G213NTD)
         self.crop_button.pack(pady=5)
-        
+
         # Nút resize ảnh
-        self.resize_button = tk.Button(root, text="Resize ảnh", command=self.resize_image)
+        self.resize_button = tk.Button(self.root, text="Resize ảnh", state=tk.DISABLED, command=self.resize_image_G213NTD)
         self.resize_button.pack(pady=5)
-        
+
+        # Status label
+        self.status_label = tk.Label(self.root, text="Ready to extract frames.", wraplength=400)
+        self.status_label.pack(pady=10)
+
         # Label để hiển thị ảnh
-        self.image_label = tk.Label(root)
-        self.image_label.pack(padx=10, pady=10)
-        
+        self.image_label = tk.Label(self.root)
+        self.image_label.pack(pady=20)
 
-    def load_image(self):
-        self.image = load_image()
-        if self.image:
-            self.original_image = self.image.copy()
+    def load_image_G213NTD(self):
+        self.current_image = load_image_G213NTD()
+        if self.current_image:
             self.update_image_display()
+            # Kích hoạt các nút chỉnh sửa ảnh
+            self.save_button.config(state=tk.NORMAL)
+            self.blur_button.config(state=tk.NORMAL)
+            self.sharpen_button.config(state=tk.NORMAL)
+            self.bw_button.config(state=tk.NORMAL)
+            self.crop_button.config(state=tk.NORMAL)
+            self.resize_button.config(state=tk.NORMAL)
 
-    def save_image(self):
-        if self.image:
-            save_image(self.image)
+    def select_video(self):
+        # Mở cửa sổ chọn file video
+        self.video_path = filedialog.askopenfilename(title="Select Video", filetypes=[("MP4 files", "*.mp4"), ("All files", "*.*")])
+
+        # Hiển thị đường dẫn video
+        if self.video_path:
+            self.video_label.config(text=f"Selected Video: {self.video_path}")
+            self.extract_button.config(state=tk.NORMAL)  # Kích hoạt nút trích xuất frame
+        else:
+            self.video_label.config(text="No video selected")
+
+    def extract_frames(self):
+        # Kiểm tra nếu không chọn video
+        if not self.video_path:
+            messagebox.showerror("Error", "Please select a video first!")
+            return
+
+        # Tạo thư mục lưu các frame
+        output_folder = "frames"
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
+        # Mở video
+        cap = cv2.VideoCapture(self.video_path)
+
+        if not cap.isOpened():
+            messagebox.showerror("Error", "Failed to open video.")
+            return
+
+        # Trích xuất frame
+        frame_count = 0
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            # Lưu từng frame dưới dạng ảnh
+            frame_filename = os.path.join(output_folder, f"frame_{frame_count:04d}.jpg")
+            cv2.imwrite(frame_filename, frame)
+            frame_count += 1
+
+        cap.release()
+
+        # Hiển thị thông báo hoàn tất
+        self.status_label.config(text=f"Extracted {frame_count} frames successfully.")
+        messagebox.showinfo("Success", f"{frame_count} frames extracted and saved to '{output_folder}'.")
+
+    def save_image_G213NTD(self):
+        if self.current_image:
+            save_image_G213NTD(self.current_image)
         else:
             messagebox.showwarning("Warning", "Chưa có ảnh để lưu!")
 
-    def blur_image(self):
-        if self.image:
-            self.image = blur_image(self.image)
+    def blur_image_G213NTD(self):
+        if self.current_image:
+            self.current_image = blur_image_G213NTD(self.current_image)
             self.update_image_display()
         else:
             messagebox.showwarning("Warning", "Chưa có ảnh để làm mờ!")
 
-    def sharpen_image(self):
-        if self.image:
-            self.image = sharpen_image(self.image)
+    def sharpen_image_G213NTD(self):
+        if self.current_image:
+            self.current_image = sharpen_image_G213NTD(self.current_image)
             self.update_image_display()
         else:
             messagebox.showwarning("Warning", "Chưa có ảnh để làm sắc nét!")
 
-    def convert_to_bw(self):
-        if self.image:
-            self.image = convert_to_bw(self.image)
+    def convert_to_bw_G213NTD(self):
+        if self.current_image:
+            self.current_image = convert_to_bw_G213NTD(self.current_image)
             self.update_image_display()
         else:
             messagebox.showwarning("Warning", "Chưa có ảnh để chuyển sang đen trắng!")
 
-    def crop_image(self):
-        if self.image:
-            # Bạn có thể cho phép người dùng nhập kích thước cắt tại đây
+    def crop_image_G213NTD(self):
+        if self.current_image:
+            # Cắt ảnh (mặc định: cắt từ 50, 50 tới 250, 250)
             left = 50
             top = 50
-            right = self.image.width - 50
-            bottom = self.image.height - 50
-            self.image = crop_image(self.image, left, top, right, bottom)
+            right = self.current_image.width - 50
+            bottom = self.current_image.height - 50
+            self.current_image = crop_image_G213NTD(self.current_image, left, top, right, bottom)
             self.update_image_display()
         else:
             messagebox.showwarning("Warning", "Chưa có ảnh để cắt!")
 
-    def resize_image(self):
-        if self.image:
-            # Cho phép người dùng nhập chiều rộng và chiều cao mới
+    def resize_image_G213NTD(self):
+        if self.current_image:
+            # Resize ảnh (mặc định: 300x300)
             width = 300
             height = 300
-            self.image = resize_image(self.image, width, height)
+            self.current_image = resize_image_G213NTD(self.current_image, width, height)
             self.update_image_display()
         else:
             messagebox.showwarning("Warning", "Chưa có ảnh để resize!")
 
     def update_image_display(self):
-        if self.image:
+        if self.current_image:
             # Chuyển đổi ảnh từ PIL Image sang định dạng mà tkinter có thể hiển thị
-            img_tk = ImageTk.PhotoImage(self.image)
+            img_tk = ImageTk.PhotoImage(self.current_image)
             self.image_label.config(image=img_tk)
             self.image_label.image = img_tk  # Lưu tham chiếu đến ảnh để tránh bị garbage collection
 
-# Tạo cửa sổ chính của ứng dụng
 if __name__ == "__main__":
     root = tk.Tk()
-    app = ImageEditorApp(root)
+    app = VideoFrameExtractorApp_G213NTD(root)
     root.mainloop()

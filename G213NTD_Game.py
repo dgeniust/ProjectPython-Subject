@@ -18,11 +18,11 @@ fpsClock = pygame.time.Clock() #Lặp theo nhịp clock (tham số FPS)
 #####################################
 #TỐC ĐỘ CUỘN NỀN
 BGSPEED = 1.5 # tốc độ cuộn nền
-BGIMG = pygame.image.load('./G213NTD_GAME/img/background.png') # hình nền
+BGIMG = pygame.image.load('./G213NTD_GAME/img/road.jpg') # hình nền
 
 # LAYER (SURFACE) NỀN
 DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH_G213NTD, WINDOWHEIGHT_G213NTD))
-pygame.display.set_caption('G213NTD_CARRACING: Game = Game ĐUA XE')
+pygame.display.set_caption('G213NTD_CARRACING: Game ĐUA XE')
 
 # LỚP HÌNH NỀN = CUỘN NỀN
 class Background():
@@ -55,7 +55,7 @@ X_MARGIN_G213 = 80
 CARWIDTH_G213 = 40
 CARHEIGHT_G213 = 60
 CARSPEED_G213 = 3
-CARIMG_22110129 = pygame.image.load('./G213NTD_GAME/img/car.png')
+CARIMG_22110129 = pygame.image.load('./G213NTD_GAME/img/ycar.png')
 #LỚP XE TRONG GAME
 class Car():
     def __init__(self):
@@ -100,7 +100,7 @@ LANEWIDTH_G213 = 60
 DISTANCE_G213 = 200
 OBSTACLESSPEED_G213 = 2
 CHANGESPEED_G213 = 0.001
-OBSTACLESIMG_G213 = pygame.image.load('./G213NTD_GAME/img/obstacles.png')
+OBSTACLESIMG_G213 = pygame.image.load('./G213NTD_GAME/img/ecar.png')
 class Obstacles():
     def __init__(self):
         self.width = CARWIDTH_G213
